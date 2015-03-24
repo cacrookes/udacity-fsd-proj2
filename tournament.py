@@ -10,23 +10,48 @@ def connect():
     """Connect to the PostgreSQL database.  Returns a database connection."""
     return psycopg2.connect("dbname=tournament")
 
+def execute_query(sql_query):
+    """Executes query
+
+    Args:
+      sql_queries: query to execute
+    """
+
+    conn = connect()
+    cur = conn.cursor()
+    cur.execute(sql_query)
+    cur.close()
+    conn.commit()
+    conn.close()
 
 def deleteMatches(tournament=0):
     """Remove all the match records from the database for the specified tournament.
 
     Args:
-      tournment: (optional) specifies which tournament to delete.
+      tournament: (optional) specifies which tournament to delete.
                  Specify 0 to delete the most recent tournament.
                  Specify -1 to delete all tournaments.
                  Defaults to 0 if not specified.
     """
+    sql_query = "" # will specify query to execute
+    if tournament == 0:
+        sql_query = "DELETE FROM tournament_roster WHERE tournament_id = MAX(tournament_id);"
+        sql_query = "DELETE FROM tournament_matches WHERE tournament_id = MAX(tournament_id);"
+    elif tournament = -1:
+        sql_query = "DELETE FROM tournament_roster; DELETE FROM tournament_matches;"
+    else:
+        sql_query = "DELETE FROM tournament_roster WHERE tournament_id = %i;", tournament
+        sql_query = "DELETE FROM tournament_matches WHERE tournament_id = %i;", tournament
+
+    execute_query(sql_query)
+
 
 
 def deletePlayers(tournament=0):
     """Remove all the player records from the database for the specified tournament.
 
     Args:
-      tournment: (optional) specifies which tournament to delete players from.
+      tournament: (optional) specifies which tournament to delete players from.
                  Specify 0 to delete player data from the most recent tournament.
                  Specify -1 to delete all player data in all tournaments.
                  Defaults to 0 if not specified.
@@ -36,7 +61,7 @@ def countPlayers(tournament=0):
     """Returns the number of players currently registered in the specified tournament.
 
     Args:
-      tournment: (optional) specifies which tournament to count the players from.
+      tournament: (optional) specifies which tournament to count the players from.
                  Specify 0 to count the players in the most recent tournament.
                  Specify -1 to count all players in all tournaments. Each player is
                  only counted once, regardless of number of tournaments entered.
@@ -57,7 +82,7 @@ def registerPlayer(name, tournament=0, player_id=0):
 
     Args:
       name: the player's full name (need not be unique).
-      tournment: (optional) specifies which tournament to register the player for.
+      tournament: (optional) specifies which tournament to register the player for.
                  Specify 0 to count the players in the most recent tournament.
                  Specify -1 to count all players in all tournaments. Each player is
                  only counted once, regardless of number of tournaments entered.
@@ -87,7 +112,7 @@ def playerStandings(tournament=0):
         matches: the number of matches the player has played
 
     Args:
-      tournment: (optional) specifies which tournament to get the standings for.
+      tournament: (optional) specifies which tournament to get the standings for.
                  Specify 0 to get the results of the most recent tournament.
                  Defaults to 0 if not specified.
     """
@@ -100,7 +125,7 @@ def reportMatch(winner, loser, draw=False, tournament=0):
       winner:  the id number of the player who won. *(see note regarding draws below)
       loser:  the id number of the player who lost. *(see note regarding draws below)
       draw: (optional) specifies if the match was a draw.
-      tournment: (optional) specifies which tournament the match was played in.
+      tournament: (optional) specifies which tournament the match was played in.
                  Specify 0 to report a match for the most recent tournament.
                  Defaults to 0 if not specified.
 
@@ -130,7 +155,7 @@ def swissPairings(tournament=0):
         name2: the second player's name. Set to 'Bye' in the case of a bye.
 
     Args:
-      tournment: (optional) specifies which tournament to get the standings for.
+      tournament: (optional) specifies which tournament to get the standings for.
                  Specify 0 to get the results of the most recent tournament.
                  Defaults to 0 if not specified.
 
