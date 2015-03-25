@@ -59,7 +59,8 @@ def deleteMatches(tournament=0):
     sql_query = "" # will specify query to execute
     parameters = []
     if tournament == 0:
-        sql_query = "DELETE FROM tournament_matches WHERE tournament_id = MAX(tournament_id);"
+        sql_query = "DELETE FROM tournament_matches WHERE tournament_id = \
+                    (SELECT MAX(tournament_id) FROM tournament_matches);"
     elif tournament == -1:
         sql_query = "DELETE FROM tournament_matches;"
     else:
@@ -84,7 +85,8 @@ def deletePlayers(tournament=0):
     parameters = []
     # Delete players from tournament registry
     if tournament == 0:
-        sql_query = "DELETE FROM tournament_roster WHERE tournament_id = MAX(tournament_id);"
+        sql_query = "DELETE FROM tournament_roster WHERE tournament_id = \
+                    (SELECT MAX(tournament_id) FROM tournament_roster);"
     elif tournament == -1:
         sql_query = "DELETE FROM tournament_roster; DELETE FROM players;"
     else:
@@ -111,7 +113,8 @@ def countPlayers(tournament=0):
     sql_query = "" # will specify query to execute
     parameters = []
     if tournament == 0:
-        sql_query = "SELECT count(*) FROM tournament_roster WHERE tournament_id = MAX(tournament_id);"
+        sql_query = "SELECT count(*) FROM tournament_roster WHERE tournament_id = \
+                    (SELECT MAX(tournament_id) FROM tournament_roster);"
     elif tournament == -1:
         sql_query = "SELECT count(*) FROM players;"
     else:
