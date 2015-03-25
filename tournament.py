@@ -10,23 +10,42 @@ def connect():
     """Connect to the PostgreSQL database.  Returns a database connection."""
     return psycopg2.connect("dbname=tournament")
 
-def execute_query(sql_query):
-    """Executes query
-
-    Returns:
-      Result of the query
+def execute_query(sql_query, parameters=[]):
+    """Executes query. Useful when no records need to be fetched.
 
     Args:
-      sql_queries: query to execute
+      sql_query: query to execute
+      parameters: (optional) list containing paramaters to pass to query. Set to
+                  an empty list by default.
     """
 
     conn = connect()
     cur = conn.cursor()
-    result = cur.execute(sql_query)
+    cur.execute(sql_query, parameters)
     cur.close()
     conn.commit()
     conn.close()
+
+def execute_query_fetchone(sql_query, parameters=[]):
+    """Executes a query, and then fetches the first item of the first row returned
+       by the query. This value is then returned to the caller.
+
+    Args:
+      sql_query: query to execute
+    parameters: (optional) list containing paramaters to pass to query. Set to
+                an empty list by default.
+    """
+
+    conn = connect()
+    cur = conn.cursor()
+    cur.execute(sql_query, parameters)
+    result = cur.fetchone()[0]
+    cur.close()
+    conn.commit()
+    conn.close()
+
     return result
+
 
 def deleteMatches(tournament=0):
     """Remove all the match records from the database for the specified tournament.
@@ -38,14 +57,16 @@ def deleteMatches(tournament=0):
                  Defaults to 0 if not specified.
     """
     sql_query = "" # will specify query to execute
+    parameters = []
     if tournament == 0:
         sql_query = "DELETE FROM tournament_matches WHERE tournament_id = MAX(tournament_id);"
-    elif tournament = -1:
+    elif tournament == -1:
         sql_query = "DELETE FROM tournament_matches;"
     else:
-        sql_query = "DELETE FROM tournament_matches WHERE tournament_id = %i;", tournament
+        sql_query = "DELETE FROM tournament_matches WHERE tournament_id = %s;"
+        parameters = [tournament]
 
-    execute_query(sql_query)
+    execute_query(sql_query, parameters)
 
 
 def deletePlayers(tournament=0):
@@ -60,18 +81,20 @@ def deletePlayers(tournament=0):
                  Defaults to 0 if not specified.
     """
     sql_query = "" # will specify query to execute
+    parameters = []
     # Delete players from tournament registry
     if tournament == 0:
         sql_query = "DELETE FROM tournament_roster WHERE tournament_id = MAX(tournament_id);"
-    elif tournament = -1:
+    elif tournament == -1:
         sql_query = "DELETE FROM tournament_roster; DELETE FROM players;"
     else:
-        sql_query = "DELETE FROM tournament_roster WHERE tournament_id = %i;", tournament
+        sql_query = "DELETE FROM tournament_roster WHERE tournament_id = %s;"
+        parameters = [tournament]
 
     # Delete players from player table if they are no longer registered for any tournaments
     sql_query += "DELETE FROM players WHERE player_id NOT IN (SELECT player_id FROM tournament_roster);"
 
-    execute_query(sql_query)
+    execute_query(sql_query, parameters)
 
 
 def countPlayers(tournament=0):
@@ -86,15 +109,16 @@ def countPlayers(tournament=0):
     """
 
     sql_query = "" # will specify query to execute
+    parameters = []
     if tournament == 0:
         sql_query = "SELECT count(*) FROM tournament_roster WHERE tournament_id = MAX(tournament_id);"
-    elif tournament = -1:
+    elif tournament == -1:
         sql_query = "SELECT count(*) FROM players;"
     else:
-        sql_query = "SELECT count(*) FROM tournament_roster WHERE tournament_id = %i;", tournament
+        sql_query = "SELECT count(*) FROM tournament_roster WHERE tournament_id = %s;"
+        parameters = [tournament]
 
-    return execute_query(sql_query)
-
+    return execute_query_fetchone(sql_query, parameters)
 
 def registerPlayer(name, tournament=0, player_id=0):
     """Adds a player to the tournament database and assigns player to the specified
@@ -114,9 +138,7 @@ def registerPlayer(name, tournament=0, player_id=0):
     Args:
       name: the player's full name (need not be unique).
       tournament: (optional) specifies which tournament to register the player for.
-                 Specify 0 to count the players in the most recent tournament.
-                 Specify -1 to count all players in all tournaments. Each player is
-                 only counted once, regardless of number of tournaments entered.
+                 Specify 0 to register the player for the next tournament.
                  Defaults to 0 if not specified.
       player_id: (optional) if the player has registered for a previous tournament,
                  they can register for a new tournament with their player_id. If a
@@ -125,6 +147,21 @@ def registerPlayer(name, tournament=0, player_id=0):
                  new and needs to be created. Defaults to 0.
     """
 
+    # if player_id is 0, create the new player and get the player's id
+    if player_id == 0:
+        player_id = execute_query_fetchone("INSERT INTO players (name) VALUES (%s) RETURNING player_id", [name])
+
+    """ if tournament = 0, add the player to the next tournament, which will be after
+        the latest tournament
+    """
+    if tournament == 0:
+        last_tournament = execute_query_fetchone("SELECT MAX(tournament_id) FROM tournament_matches")
+        tournament = int(0 if last_tournament is None else last_tournament) + 1
+
+    execute_query("INSERT INTO tournament_roster (tournament_id, player_id, had_bye) VALUES (%s, %s, FALSE)",
+        [tournament, player_id])
+
+    return {'player_id': player_id, 'tournament': tournament}
 
 def playerStandings(tournament=0):
     """Returns a list of the players and their win records for a specified tournament.
