@@ -13,16 +13,20 @@ def connect():
 def execute_query(sql_query):
     """Executes query
 
+    Returns:
+      Result of the query
+
     Args:
       sql_queries: query to execute
     """
 
     conn = connect()
     cur = conn.cursor()
-    cur.execute(sql_query)
+    result = cur.execute(sql_query)
     cur.close()
     conn.commit()
     conn.close()
+    return result
 
 def deleteMatches(tournament=0):
     """Remove all the match records from the database for the specified tournament.
@@ -35,20 +39,19 @@ def deleteMatches(tournament=0):
     """
     sql_query = "" # will specify query to execute
     if tournament == 0:
-        sql_query = "DELETE FROM tournament_roster WHERE tournament_id = MAX(tournament_id);"
         sql_query = "DELETE FROM tournament_matches WHERE tournament_id = MAX(tournament_id);"
     elif tournament = -1:
-        sql_query = "DELETE FROM tournament_roster; DELETE FROM tournament_matches;"
+        sql_query = "DELETE FROM tournament_matches;"
     else:
-        sql_query = "DELETE FROM tournament_roster WHERE tournament_id = %i;", tournament
         sql_query = "DELETE FROM tournament_matches WHERE tournament_id = %i;", tournament
 
     execute_query(sql_query)
 
 
-
 def deletePlayers(tournament=0):
     """Remove all the player records from the database for the specified tournament.
+       If a player is no longer registered for any tournaments, the player will
+       also be deleted from master player table.
 
     Args:
       tournament: (optional) specifies which tournament to delete players from.
@@ -56,6 +59,20 @@ def deletePlayers(tournament=0):
                  Specify -1 to delete all player data in all tournaments.
                  Defaults to 0 if not specified.
     """
+    sql_query = "" # will specify query to execute
+    # Delete players from tournament registry
+    if tournament == 0:
+        sql_query = "DELETE FROM tournament_roster WHERE tournament_id = MAX(tournament_id);"
+    elif tournament = -1:
+        sql_query = "DELETE FROM tournament_roster; DELETE FROM players;"
+    else:
+        sql_query = "DELETE FROM tournament_roster WHERE tournament_id = %i;", tournament
+
+    # Delete players from player table if they are no longer registered for any tournaments
+    sql_query += "DELETE FROM players WHERE player_id NOT IN (SELECT player_id FROM tournament_roster);"
+
+    execute_query(sql_query)
+
 
 def countPlayers(tournament=0):
     """Returns the number of players currently registered in the specified tournament.
@@ -68,6 +85,16 @@ def countPlayers(tournament=0):
                  Defaults to 0 if not specified.
     """
 
+    sql_query = "" # will specify query to execute
+    if tournament == 0:
+        sql_query = "SELECT count(*) FROM tournament_roster WHERE tournament_id = MAX(tournament_id);"
+    elif tournament = -1:
+        sql_query = "SELECT count(*) FROM players;"
+    else:
+        sql_query = "SELECT count(*) FROM tournament_roster WHERE tournament_id = %i;", tournament
+
+    return execute_query(sql_query)
+
 
 def registerPlayer(name, tournament=0, player_id=0):
     """Adds a player to the tournament database and assigns player to the specified
@@ -77,8 +104,12 @@ def registerPlayer(name, tournament=0, player_id=0):
     should be handled by your SQL database schema, not in your Python code.)
 
     Returns:
-      An integer storing the player's id. This can be used for registering the player
-      in future tournaments.
+      A dictionary with:
+        player_id: An integer storing the player's id. This can be used for
+                   registering the player in future tournaments.
+        tournament: An integer representing the tournament id the player is registered
+                    for. This can be used to register other players in the same
+                    tournament.
 
     Args:
       name: the player's full name (need not be unique).

@@ -9,7 +9,7 @@
 
 -- Stores player names with their ids. There can be duplicate names.
 CREATE TABLE IF NOT EXISTS players (
-  player_id   integer PRIMARY KEY,
+  player_id   serial PRIMARY KEY,
   name        text
 );
 
@@ -35,6 +35,6 @@ CREATE TABLE IF NOT EXISTS tournament_matches (
   winner_id     integer,
   CONSTRAINT check_winner CHECK((draw AND winner_id IS NULL) OR (NOT draw AND winner_id IS NOT NULL)),
   FOREIGN KEY (tournament_id, player1_id) REFERENCES tournament_roster,
-  FOREIGN KEY (tournament_id, player2_id) REFERENCES tournament_roster, 
+  FOREIGN KEY (tournament_id, player2_id) REFERENCES tournament_roster,
   PRIMARY KEY (tournament_id, match_id)
 );
