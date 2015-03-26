@@ -26,20 +26,21 @@ def execute_query(sql_query, parameters=[]):
     conn.commit()
     conn.close()
 
-def execute_query_fetchone(sql_query, parameters=[]):
-    """Executes a query, and then fetches the first item of the first row returned
-       by the query. This value is then returned to the caller.
+def execute_query_fetchall(sql_query, parameters=[]):
+    """Executes a query, and then fetches the result of query. The results are
+       then returned to the caller.
 
     Args:
       sql_query: query to execute
-    parameters: (optional) list containing paramaters to pass to query. Set to
+      parameters: (optional) list containing paramaters to pass to query. Set to
                 an empty list by default.
     """
 
     conn = connect()
     cur = conn.cursor()
     cur.execute(sql_query, parameters)
-    result = cur.fetchone()[0]
+    # result = cur.fetchone()[0]
+    result = cur.fetchall()
     cur.close()
     conn.commit()
     conn.close()
@@ -121,7 +122,7 @@ def countPlayers(tournament=0):
         sql_query = "SELECT count(*) FROM tournament_roster WHERE tournament_id = %s;"
         parameters = [tournament]
 
-    return execute_query_fetchone(sql_query, parameters)
+    return execute_query_fetchall(sql_query, parameters)[0][0]
 
 def registerPlayer(name, tournament=0, player_id=0):
     """Adds a player to the tournament database and assigns player to the specified
@@ -152,13 +153,13 @@ def registerPlayer(name, tournament=0, player_id=0):
 
     # if player_id is 0, create the new player and get the player's id
     if player_id == 0:
-        player_id = execute_query_fetchone("INSERT INTO players (name) VALUES (%s) RETURNING player_id", [name])
+        player_id = execute_query_fetchall("INSERT INTO players (name) VALUES (%s) RETURNING player_id", [name])[0][0]
 
     """ if tournament = 0, add the player to the next tournament, which will be after
         the latest tournament
     """
     if tournament == 0:
-        last_tournament = execute_query_fetchone("SELECT MAX(tournament_id) FROM tournament_matches")
+        last_tournament = execute_query_fetchall("SELECT MAX(tournament_id) FROM tournament_matches")[0][0]
         tournament = int(0 if last_tournament is None else last_tournament) + 1
 
     execute_query("INSERT INTO tournament_roster (tournament_id, player_id, had_bye) VALUES (%s, %s, FALSE)",
@@ -189,19 +190,12 @@ def playerStandings(tournament=0):
     """
     # if tournament is 0, get the lastest tournament
     if tournament == 0:
-        tournament = int(execute_query_fetchone("SELECT MAX(tournament_id) FROM tournament_roster"))
+        tournament = int(execute_query_fetchall("SELECT MAX(tournament_id) FROM tournament_roster")[0][0])
 
     sql_query = "SELECT pr.player_id, p.name, pr.wins, pr.matches FROM player_rankings pr, players p \
-                 WHERE pr.tournament_id = %s AND pr.player_id = p.player_id"
-    conn = connect()
-    cur = conn.cursor()
-    cur.execute(sql_query, [tournament])
-    results = cur.fetchall()
-    cur.close()
-    conn.commit()
-    conn.close()
+                 WHERE pr.tournament_id = %s AND pr.player_id = p.player_id ORDER BY pr.points"
 
-    return results
+    return execute_query_fetchall(sql_query, [tournament])
 
 def reportMatch(winner, loser, draw=False, tournament=0):
     """Records the outcome of a single match between two players.
@@ -222,7 +216,7 @@ def reportMatch(winner, loser, draw=False, tournament=0):
 
     # if tournament is 0, get the lastest tournaments
     if tournament == 0:
-        tournament = int(execute_query_fetchone("SELECT MAX(tournament_id) FROM tournament_roster"))
+        tournament = int(execute_query_fetchall("SELECT MAX(tournament_id) FROM tournament_roster")[0][0])
 
     if draw:
         execute_query("INSERT INTO tournament_matches (player1_id, player2_id, draw, tournament_id) \
@@ -257,7 +251,7 @@ def swissPairings(tournament=0):
     """
     # if tournament is 0, get the lastest tournaments
     if tournament == 0:
-        tournament = int(execute_query_fetchone("SELECT MAX(tournament_id) FROM tournament_roster"))
+        tournament = int(execute_query_fetchall("SELECT MAX(tournament_id) FROM tournament_roster")[0][0])
 
     standings = playerStandings(tournament)
     pairings = []
@@ -265,18 +259,21 @@ def swissPairings(tournament=0):
     # Check if we have an odd number of players. If so, randomly give a player a bye.
     # Only players who have not yet had a bye are eligble.
     if len(standings) % 2 == 1:
-        bye_player = execute_query_fetchone("SELECT player_id FROM tournament_roster WHERE tournament_id = %s \
-                                            AND NOT had_bye ORDER BY RAND() LIMIT 1")
+        sql_query = "SELECT p.player_id, p.name FROM tournament_roster tr, player p \
+                     WHERE tr.tournament_id = %s AND NOT had_bye AND tr.player_id = p.player_id \
+                     ORDER BY RAND() LIMIT 1"
+        results = execute_query_fetchall(sql_query, [tournament])
+        bye_player_id = results[0][0]
+        bye_player_name = results[0][1]
         for player in standings:
             if bye_player == player[0]:
-                #TODO: change above query to also get player's name
-                # pairings.append(bye_player, bye_player_name, 0, "BYE")
+                pairings.append((bye_player, bye_player_name, 0, "BYE"))
                 standings.remove(player)
                 break
 
     while len(standings) > 0:
         player1 = standings.pop()
         player2 = standings.pop()
-        pairings.append(player1[0], player1[1], player2[0], player2[1])
+        pairings.append((player1[0], player1[1], player2[0], player2[1]))
 
     return pairings
