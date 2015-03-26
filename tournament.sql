@@ -38,3 +38,19 @@ CREATE TABLE IF NOT EXISTS tournament_matches (
   FOREIGN KEY (tournament_id, player2_id) REFERENCES tournament_roster,
   PRIMARY KEY (tournament_id, match_id)
 );
+
+-- Aggregates data for each player in each tournament, including number of wins,
+-- draws, matches, and points. Points are calculated as 2 points per win, 1 per draw.
+-- Results are sorted by tournament, and then by point totals inside each tournament.
+CREATE VIEW player_rankings as
+  SELECT tr.tournament_id,
+         tr.player_id,
+         COUNT(CASE WHEN tr.player_id = tm.player1_id OR tr.player_id = tm.player2_id THEN 1 END) AS matches,
+         COUNT(CASE WHEN tm.winner_id = tr.player_id THEN 1 END) AS wins,
+         COUNT(CASE WHEN tm.draw = true THEN 1 END) AS draws,
+         SUM(CASE WHEN tm.winner_id = tr.player_id THEN 2 WHEN tm.draw = true THEN 1 END) AS points
+         FROM tournament_roster tr LEFT JOIN tournament_matches tm
+         ON tm.tournament_id = tr.tournament_id
+         AND (tr.player_id = tm.player1_id OR tr.player_id = tm.player2_id)
+         GROUP BY tr.player_id, tr.tournament_id
+         ORDER BY tournament_id ASC, points DESC;
