@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS tournament_matches (
   player1_id    integer,
   player2_id    integer,
   draw          boolean DEFAULT FALSE,
-  winner_id     integer,
+  winner_id     integer DEFAULT NULL,
   CONSTRAINT check_winner CHECK((draw AND winner_id IS NULL) OR (NOT draw AND winner_id IS NOT NULL)),
   FOREIGN KEY (tournament_id, player1_id) REFERENCES tournament_roster,
   FOREIGN KEY (tournament_id, player2_id) REFERENCES tournament_roster,
