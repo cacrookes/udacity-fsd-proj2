@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS tournament_roster (
 -- in the case when 'draw' is true.
 CREATE TABLE IF NOT EXISTS tournament_matches (
   tournament_id integer,
-  match_id      integer,
+  match_id      serial,
   player1_id    integer,
   player2_id    integer,
   draw          boolean DEFAULT FALSE,
