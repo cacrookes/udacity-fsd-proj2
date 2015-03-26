@@ -168,18 +168,18 @@ def registerPlayer(name, tournament=0, player_id=0):
 
 def playerStandings(tournament=0):
     """Returns a list of the players and their win records for a specified tournament.
-    Also indicates number of draws. Sorted based on winning percentage.
-    A draw counts as 1/2 a win.
+    Sorted based on winning percentage. A draw counts as 1/2 a win. Due to the output
+    expected by the testcases, draw data is not included in the output, however it is
+    used for sorting the players.
 
     The first entry in the list should be the player in first place, or a player
     tied for first place if there is currently a tie.
 
     Returns:
-      A list of tuples, each of which contains (id, name, wins, draws, matches):
+      A list of tuples, each of which contains (id, name, wins, matches):
         id: the player's unique id (assigned by the database)
         name: the player's full name (as registered)
-        wins: the number of matches the player has won
-        draws: the number of draws the player has
+        wins: the number of matches the player has won.
         matches: the number of matches the player has played
 
     Args:
@@ -206,6 +206,16 @@ def reportMatch(winner, loser, draw=False, tournament=0):
       rather than a win or loss.
     """
 
+    # if tournament is 0, get the lastest tournaments
+    if tournament == 0:
+        tournament = int(execute_query_fetchone("SELECT MAX(tournament_id) FROM tournament_roster"))
+
+    if draw:
+        execute_query("INSERT INTO tournament_matches (player1_id, player2_id, draw, tournament_id) \
+                        VALUES (%s, %s, TRUE, %s)", [winner, loser, tournament])
+    else:
+        execute_query("INSERT INTO tournament_matches (player1_id, player2_id, draw, winner_id tournament_id) \
+                        VALUES (%s, %s, FALSE, %s, %s)", [winner, loser, winner, tournament])
 
 def swissPairings(tournament=0):
     """Returns a list of pairs of players for the next round of a match.
@@ -231,3 +241,28 @@ def swissPairings(tournament=0):
                  Defaults to 0 if not specified.
 
     """
+    # if tournament is 0, get the lastest tournaments
+    if tournament == 0:
+        tournament = int(execute_query_fetchone("SELECT MAX(tournament_id) FROM tournament_roster"))
+
+    standings = playerStandings(tournament)
+    pairings = []
+
+    # Check if we have an odd number of players. If so, randomly give a player a bye.
+    # Only players who have not yet had a bye are eligble.
+    if len(standings) % 2 == 1:
+        bye_player = execute_query_fetchone("SELECT player_id FROM tournament_roster WHERE tournament_id = %s \
+                                            AND NOT had_bye ORDER BY RAND() LIMIT 1")
+        for player in standings:
+            if bye_player == player[0]:
+                #TODO: change above query to also get player's name
+                # pairings.push(bye_player, bye_player_name, 0, "BYE")
+                standings.remove(player)
+                break
+
+    while len(standings) > 0:
+        player1 = standings.pop()
+        player2 = standings.pop()
+        pairings.push(player1[0], player1[1], player2[0], player2[1])
+
+    return pairings
