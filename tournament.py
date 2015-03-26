@@ -169,7 +169,7 @@ def registerPlayer(name, tournament=0, player_id=0):
 def playerStandings(tournament=0):
     """Returns a list of the players and their win records for a specified tournament.
     Sorted based on winning percentage. A draw counts as 1/2 a win. Due to the output
-    expected by the testcases, draw data is not included in the output, however it is
+    expected by the test cases, draw data is not included in the output, however it is
     used for sorting the players.
 
     The first entry in the list should be the player in first place, or a player
@@ -187,7 +187,21 @@ def playerStandings(tournament=0):
                  Specify 0 to get the results of the most recent tournament.
                  Defaults to 0 if not specified.
     """
+    # if tournament is 0, get the lastest tournament
+    if tournament == 0:
+        tournament = int(execute_query_fetchone("SELECT MAX(tournament_id) FROM tournament_roster"))
 
+    sql_query = "SELECT pr.player_id, p.name, pr.wins, pr.matches FROM player_rankings pr, players p \
+                 WHERE pr.tournament_id = %s AND pr.player_id = p.player_id"
+    conn = connect()
+    cur = conn.cursor()
+    cur.execute(sql_query, [tournament])
+    results = cur.fetchall()
+    cur.close()
+    conn.commit()
+    conn.close()
+
+    return results
 
 def reportMatch(winner, loser, draw=False, tournament=0):
     """Records the outcome of a single match between two players.
@@ -214,7 +228,7 @@ def reportMatch(winner, loser, draw=False, tournament=0):
         execute_query("INSERT INTO tournament_matches (player1_id, player2_id, draw, tournament_id) \
                         VALUES (%s, %s, TRUE, %s)", [winner, loser, tournament])
     else:
-        execute_query("INSERT INTO tournament_matches (player1_id, player2_id, draw, winner_id tournament_id) \
+        execute_query("INSERT INTO tournament_matches (player1_id, player2_id, draw, winner_id, tournament_id) \
                         VALUES (%s, %s, FALSE, %s, %s)", [winner, loser, winner, tournament])
 
 def swissPairings(tournament=0):
@@ -256,13 +270,13 @@ def swissPairings(tournament=0):
         for player in standings:
             if bye_player == player[0]:
                 #TODO: change above query to also get player's name
-                # pairings.push(bye_player, bye_player_name, 0, "BYE")
+                # pairings.append(bye_player, bye_player_name, 0, "BYE")
                 standings.remove(player)
                 break
 
     while len(standings) > 0:
         player1 = standings.pop()
         player2 = standings.pop()
-        pairings.push(player1[0], player1[1], player2[0], player2[1])
+        pairings.append(player1[0], player1[1], player2[0], player2[1])
 
     return pairings
