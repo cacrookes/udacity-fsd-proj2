@@ -76,7 +76,7 @@ A few functions are provided to help manage the database
 
 ###countPlayers(tournament)
 - Returns the number of players currently registered in the specified tournament.
-- **tournament** is optional. If left blank or set to 0, the number of players registered for the lastest
+- **tournament** is optional. If left blank or set to 0, the number of players registered for the latest
   tournament will be returned.
 - set **tournament** to **-1** in order to get all players registered in every tournament. Each player is
   only counted once, even if they are registered for multiple tournaments.
