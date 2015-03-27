@@ -10,7 +10,7 @@ functionality for running a swiss-style tournament.
 ###Set up datbase
 1. Create a postgres database named **tournament**.
 2. Import the tables and view specified in **tournament.sql**
-	i) This can be accomplished by running ** \i tournament.sql** from the psql command line.
+  * This can be accomplished by running **\i tournament.sql** from the psql command line.
 
 Congrats, you now have a database ready to use!
 
@@ -44,20 +44,20 @@ Congrats, you now have a database ready to use!
 A few functions are provided to help manage the database
 
 ###deleteMatches(tournament)
--deletes all matches from the tournament_matches table for the specified tournament
--**tournament** is optional. If left blank or set to 0, matches for the last tournament will be deleted.
--set **tournament** to **-1** in order to delete match data for all tournaments
+- deletes all matches from the tournament_matches table for the specified tournament
+- **tournament** is optional. If left blank or set to 0, matches for the last tournament will be deleted.
+- set **tournament** to **-1** in order to delete match data for all tournaments
 
 ###deletePlayers(tournament)
--Remove all the player records from the database for the specified tournament. If a player is no
- longer registered for any tournaments, the player will also be deleted from master player table.
--**tournament** is optional. If left blank or set to 0, player records for the latest tournament will be
- deleted.
--set **tournament** to **-1** in order to delete all player data for all tournaments.
+- Remove all the player records from the database for the specified tournament. If a player is no
+  longer registered for any tournaments, the player will also be deleted from master player table.
+- **tournament** is optional. If left blank or set to 0, player records for the latest tournament will be
+  deleted.
+- set **tournament** to **-1** in order to delete all player data for all tournaments.
 
 ###countPlayers(tournament)
--Returns the number of players currently registered in the specified tournament.
--**tournament** is optional. If left blank or set to 0, the number of players registered for the lastest
- tournament will be returned.
--set **tournament** to **-1** in order to get all players registered in every tournament. Each player is
- only counted once, even if they are registered for multiple tournaments.
+- Returns the number of players currently registered in the specified tournament.
+- **tournament** is optional. If left blank or set to 0, the number of players registered for the lastest
+  tournament will be returned.
+- set **tournament** to **-1** in order to get all players registered in every tournament. Each player is
+  only counted once, even if they are registered for multiple tournaments.
