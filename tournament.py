@@ -4,7 +4,7 @@
 #
 
 import psycopg2
-
+import bleach
 
 def connect():
     """Connect to the PostgreSQL database.  Returns a database connection."""
@@ -26,6 +26,7 @@ def execute_query(sql_query, parameters=[]):
     conn.commit()
     conn.close()
 
+
 def execute_query_fetchall(sql_query, parameters=[]):
     """Executes a query, and then fetches the result of query. The results are
        then returned to the caller.
@@ -39,7 +40,6 @@ def execute_query_fetchall(sql_query, parameters=[]):
     conn = connect()
     cur = conn.cursor()
     cur.execute(sql_query, parameters)
-    # result = cur.fetchone()[0]
     result = cur.fetchall()
     cur.close()
     conn.commit()
@@ -66,7 +66,7 @@ def deleteMatches(tournament=0):
         sql_query = "DELETE FROM tournament_matches;"
     else:
         sql_query = "DELETE FROM tournament_matches WHERE tournament_id = %s;"
-        parameters = [tournament]
+        parameters = [bleach.clean(tournament)]
 
     execute_query(sql_query, parameters)
 
@@ -92,7 +92,7 @@ def deletePlayers(tournament=0):
         sql_query = "DELETE FROM tournament_roster; DELETE FROM players;"
     else:
         sql_query = "DELETE FROM tournament_roster WHERE tournament_id = %s;"
-        parameters = [tournament]
+        parameters = [bleach.clean(tournament)]
 
     # Delete players from player table if they are no longer registered for any tournaments
     sql_query += "DELETE FROM players WHERE player_id NOT IN (SELECT player_id FROM tournament_roster);"
@@ -120,7 +120,7 @@ def countPlayers(tournament=0):
         sql_query = "SELECT count(*) FROM players;"
     else:
         sql_query = "SELECT count(*) FROM tournament_roster WHERE tournament_id = %s;"
-        parameters = [tournament]
+        parameters = [bleach.clean(tournament)]
 
     return execute_query_fetchall(sql_query, parameters)[0][0]
 
@@ -163,7 +163,7 @@ def registerPlayer(name, tournament=0, player_id=0):
         tournament = int(0 if last_tournament is None else last_tournament) + 1
 
     execute_query("INSERT INTO tournament_roster (tournament_id, player_id, had_bye) VALUES (%s, %s, FALSE)",
-        [tournament, player_id])
+        [bleach.clean(tournament), bleach.clean(player_id)])
 
     return {'player_id': player_id, 'tournament': tournament}
 
@@ -195,7 +195,7 @@ def playerStandings(tournament=0):
     sql_query = "SELECT pr.player_id, p.name, pr.wins, pr.matches FROM player_rankings pr, players p \
                  WHERE pr.tournament_id = %s AND pr.player_id = p.player_id ORDER BY pr.points"
 
-    return execute_query_fetchall(sql_query, [tournament])
+    return execute_query_fetchall(sql_query, [bleach.clean(tournament)])
 
 def reportMatch(winner, loser, draw=False, tournament=0):
     """Records the outcome of a single match between two players.
@@ -217,6 +217,11 @@ def reportMatch(winner, loser, draw=False, tournament=0):
     # if tournament is 0, get the lastest tournaments
     if tournament == 0:
         tournament = int(execute_query_fetchall("SELECT MAX(tournament_id) FROM tournament_roster")[0][0])
+
+    # ensure input values are clean to prevent SQL Injection attacks
+    winner = bleach.clean(winner)
+    loser = bleach.clean(loser)
+    tournament = bleach.clean(tournament)
 
     if draw:
         execute_query("INSERT INTO tournament_matches (player1_id, player2_id, draw, tournament_id) \
@@ -253,6 +258,9 @@ def swissPairings(tournament=0):
     if tournament == 0:
         tournament = int(execute_query_fetchall("SELECT MAX(tournament_id) FROM tournament_roster")[0][0])
 
+    #ensure input data is clean to prevent SQL injection attacks
+    bleach.clean(tournament)
+    
     standings = playerStandings(tournament)
     pairings = []
 
@@ -271,9 +279,6 @@ def swissPairings(tournament=0):
                 standings.remove(player)
                 break
 
-    while len(standings) > 0:
-        player1 = standings.pop()
-        player2 = standings.pop()
-        pairings.append((player1[0], player1[1], player2[0], player2[1]))
+    pairings.extend([(standings[i][0], standings[i][1], standings[i+1][0], standings[i+1][1]) for i in range(0,len(standings),2)])
 
     return pairings
