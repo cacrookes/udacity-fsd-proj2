@@ -6,6 +6,12 @@
 -- You can write comments in this file by starting them with two dashes, like
 -- these lines here.
 
+-- Creates the database if it does not exist
+DROP DATABASE IF EXISTS tournament;
+
+CREATE DATABASE tournament;
+
+\c tournament
 
 -- Stores player names with their ids. There can be duplicate names.
 CREATE TABLE IF NOT EXISTS players (
