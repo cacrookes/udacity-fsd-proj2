@@ -6,7 +6,7 @@ About
 
 This project can be used to create a database for storing tournament results.
 A library, tournament.py, is included to interact with the database. It provides
-functionality for running a swiss-style tournament. The library can 
+functionality for running a swiss-style tournament. 
 
 How to run
 ----------
