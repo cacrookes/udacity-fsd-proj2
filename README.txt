@@ -6,17 +6,37 @@ About
 
 This project can be used to create a database for storing tournament results.
 A library, tournament.py, is included to interact with the database. It provides
-functionality for running a swiss-style tournament. 
+functionality for running a swiss-style tournament.
 
 How to run
 ----------
 
 Set up datbase
 ---------------
-1. Create a postgres database named 'tournament'.
-2. Import the tables and view specified in 'tournament.sql'
-	i) This can be accomplished by running '\i tournament.sql' from the psql command line.
+**WARNING**, if you already have a database named 'tournament', running the following
+commands will remove your existing tournament database and create a new database named
+tournament.
+The 'tournament.sql' script can be used to setup a Postgres database. To setup using the
+PostgreSQL interactive terminal:
+1. From your terminal, navigate to the directory containing the 'tournament.sql' file.
+2. Start the PostgreSQL interactive terminal by running 'psql'.
+3. You should now be in the psql terminal. Run the command '\i tournament.sql'.
+  * If there already is a database named 'tournament', it will be dropped.
+  * A new database named 'tournament' will be created.
+  * The new database will be populated with the tables: players, tournament_matches,
+    tournament_roster; and the view: player_rankings.
+
 Congrats, you now have a database ready to use!
+
+Testing the database
+--------------------
+This package includes a file 'tournament_test.py' which can be used to test the database is
+set-up properly. In order to run:
+1. From your terminal, navigate to the directory containing the 'tournament_test.py' file.
+   This file is in the same location as the 'tournament.sql' file.
+2. Run the file from the terminal using the command 'python tournament_test.py'
+
+
 
 Running a tournament
 --------------------
@@ -30,7 +50,7 @@ Running a tournament
 2. Run 'swissPairings()' to generate match-ups for the first/next round
 3. For each match, record the results using 'reportMatch(winner, loser, draw, tournament)'
 	a. 'winner' and 'loser' take player_ids for values. In the event of a draw, it doesn't matter
-	   which player is listed as winner or loser. Both players will have a draw recorded as their 
+	   which player is listed as winner or loser. Both players will have a draw recorded as their
 		 result.
 	b. 'draw' is optional. It is set to 'False' by default.
 	c. 'tournament' is optional. If left blank or set to 0, the match will be added to the most recent
