@@ -38,7 +38,7 @@ set-up properly. In order to run:
   * only **name** is required.
   * if **tournament** is left blank, or set to 0, the player will be registerd for the next
 	   tournament.
-  * specifiy a **player_id** to register an existing player for a new tournament. If left blank
+  * specify a **player_id** to register an existing player for a new tournament. If left blank
 	   or set to 0, a brand new player will be created. Note, there can be multiple players with
 		 the same name.
 2. Run **swissPairings()** to generate match-ups for the first/next round

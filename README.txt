@@ -44,7 +44,7 @@ Running a tournament
 	a. only 'name' is required.
 	b. if 'tournament' is left blank, or set to 0, the player will be registerd for the next
 	   tournament.
-  c. specifiy a 'player_id' to register an existing player for a new tournament. If left blank
+  c. specify a 'player_id' to register an existing player for a new tournament. If left blank
 	   or set to 0, a brand new player will be created. Note, there can be multiple players with
 		 the same name.
 2. Run 'swissPairings()' to generate match-ups for the first/next round
@@ -83,7 +83,7 @@ deletePlayers(tournament)
 
 countPlayers(tournament)
 	-Returns the number of players currently registered in the specified tournament.
-	-tournament' is optional. If left blank or set to 0, the number of players registered for the lastest
+	-tournament' is optional. If left blank or set to 0, the number of players registered for the latest
 	 tournament will be returned.
 	-set 'tournament' to '-1' in order to get all players registered in every tournament. Each player is
 	 only counted once, even if they are registered for multiple tournaments.
