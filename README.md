@@ -11,8 +11,10 @@ functionality for running a swiss-style tournament.
 **WARNING**, if you already have a database named **tournament**, running the following
 commands will remove your existing tournament database and create a new database named
 tournament.
+
 The **tournament.sql** script can be used to setup a Postgres database. To setup using the
 PostgreSQL interactive terminal:
+
 1. From your terminal, navigate to the directory containing the **tournament.sql** file.
 2. Start the PostgreSQL interactive terminal by running **psql**.
 3. You should now be in the psql terminal. Run the command `\i tournament.sql`.
@@ -26,6 +28,7 @@ Congrats, you now have a database ready to use!
 ###Testing the database
 This package includes a file **tournament_test.py** which can be used to test the database is
 set-up properly. In order to run:
+
 1. From your terminal, navigate to the directory containing the **tournament_test.py** file.
    This file is in the same location as the **tournament.sql** file.
 2. Run the file from the terminal using the command `python tournament_test.py`
