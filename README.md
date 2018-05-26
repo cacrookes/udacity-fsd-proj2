@@ -1,13 +1,13 @@
-#Swiss-style Tournament Database and Library
+# Swiss-style Tournament Database and Library
 
-##About
+## About
 This project can be used to create a database for storing tournament results.
 A library, **tournament.py**, is included to interact with the database. It provides
 functionality for running a swiss-style tournament.
 
-##How to run
+## How to run
 
-###Set up the database
+### Set up the database
 **WARNING**, if you already have a database named **tournament**, running the following
 commands will remove your existing tournament database and create a new database named
 tournament.
@@ -25,7 +25,7 @@ PostgreSQL interactive terminal:
 
 Congrats, you now have a database ready to use!
 
-###Testing the database
+### Testing the database
 This package includes a file **tournament_test.py** which can be used to test the database is
 set-up properly. In order to run:
 
@@ -33,7 +33,7 @@ set-up properly. In order to run:
    This file is in the same location as the **tournament.sql** file.
 2. Run the file from the terminal using the command `python tournament_test.py`
 
-###Running a tournament
+### Running a tournament
 1. Register players for a tournament using **registerPlayer(name, tournament, player_id)**
   * only **name** is required.
   * if **tournament** is left blank, or set to 0, the player will be registerd for the next
@@ -59,22 +59,22 @@ set-up properly. In order to run:
 		cases, the output only indicates the number of wins each player has. Points and number of draws
 		are not included.
 
-##Database Management
+## Database Management
 A few functions are provided to help manage the database
 
-###deleteMatches(tournament)
+### deleteMatches(tournament)
 - deletes all matches from the tournament_matches table for the specified tournament
 - **tournament** is optional. If left blank or set to 0, matches for the last tournament will be deleted.
 - set **tournament** to **-1** in order to delete match data for all tournaments
 
-###deletePlayers(tournament)
+### deletePlayers(tournament)
 - Remove all the player records from the database for the specified tournament. If a player is no
   longer registered for any tournaments, the player will also be deleted from master player table.
 - **tournament** is optional. If left blank or set to 0, player records for the latest tournament will be
   deleted.
 - set **tournament** to **-1** in order to delete all player data for all tournaments.
 
-###countPlayers(tournament)
+### countPlayers(tournament)
 - Returns the number of players currently registered in the specified tournament.
 - **tournament** is optional. If left blank or set to 0, the number of players registered for the latest
   tournament will be returned.
